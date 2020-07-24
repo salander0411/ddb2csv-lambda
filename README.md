@@ -1,46 +1,59 @@
 # Description
 Lambda function dump DynamoDB into CSV format and stored in a S3 bucket
 
-# Create lambda project
+
+# Pre-requisites | 前置条件
+
+提前安装 [serverless](https://www.serverless.com/) 这个框架，点击查看[安装方法](https://www.serverless.com/framework/docs/getting-started/)
+
+# Create lambda project | 创建 project
 
 ```
 serverless create --template aws-nodejs --path ddb2csv-lambda
 cd ddb2csv-lambda
 ```
 
-# Create lambda layers for dependency
+# Create lambda layers for dependency | 添加依赖
 
 ```
 mkdir -p layer/nodejs
 cd layer/nodejs
+# 先把package.json和package-lock.json复制到这个folder底下
 npm install
 ```
 
-# Create your code and deploy it
+# Create your code and deploy it | 代码部署
 
 ```
+# 回到母目录
 cd ddb2csv-lambda
+# 将serverless.yml替换为git上提供的，替换outS3Bucket参数，为自己的S3 bucket以及路径；替换role为自己的lambda Role Name
+# 将handler.js 替换为 git 上提供的
+
 ## deploy the project
-serverless deploy -v --aws-profile cn-north-1 --region cn-north-1
+serverless deploy -v --aws-profile <替换为profile name，如果没有起别名，则是default> --region cn-north-1
 ## deploy the updated function
-serverless deploy function -f Ddb2Csv -v --aws-profile cn-north-1 --region cn-north-1
+serverless deploy function -f Ddb2Csv -v --aws-profile <替换为profile name> --region cn-north-1
 
 ```
 
-# Testing
-## sample event
+# Testing | 测试
+## sample event | 配置文件
+ 
+修改 test-data.json 文件，替换 ``tablename`` 和 ``s3bucket`` ，如果对csv文件名有要求，替换 ``filename``，以下为default参数 example。
 
 ```
 ## You can put below json in test-data.json
 {
-    "tablename": "SIAMoviesHandleRequest",
-    "s3bucket": "ray-emr-multi-master",
-    "filename": "SIAMoviesHandleRequest-export.csv",
+    "tablename": "SIAMoviesHandleRequest",  # ddb table
+    "s3bucket": "ray-emr-multi-master",  # s3 bucket
+    "filename": "SIAMoviesHandleRequest-export.csv", #csv文件名
     "action": "dump"
 }
 
 ## invoke function
-serverless invoke -f Ddb2Csv -l --aws-profile cn-north-1 --region cn-north-1 --path test-data.json
+## 触发执行，检查日志
+serverless invoke -f Ddb2Csv -l --aws-profile <替换为profile name> --region cn-north-1 --path test-data.json
 {
     "statusCode": 200,
     "body": {
@@ -83,7 +96,9 @@ The Super Man,2017,Nothing happens at all.,9
 ```
 
 
-## 50k items table export testing
+## 50k items table export testing 
+
+测试：在 50k 的 item 量下，此方案可以正常 work。
 
 ```
 ## Sample event, you can put below json in test-data.json
